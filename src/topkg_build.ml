@@ -9,12 +9,12 @@ open Topkg_result
 let ocamlbuild_flags =
   Topkg_cmd.(empty % "-use-ocamlfind" % "-classic-display")
 
-let build_cmd c os =
+let build_cmd ~use_toolchain c os =
   let ocamlbuild = Topkg_conf.tool "ocamlbuild" os in
   let build_dir = Topkg_conf.build_dir c in
   let toolchain =
-    match Topkg_conf.toolchain c with
-    | Some toolchain -> Topkg_cmd.(v "-toolchain" % toolchain)
+    match use_toolchain, Topkg_conf.toolchain c with
+    | true, Some toolchain -> Topkg_cmd.(v "-toolchain" % toolchain)
     | _ -> Topkg_cmd.empty
   in
   let debug = Topkg_cmd.(on (Topkg_conf.debug c) (v "-tag" % "debug")) in
@@ -44,10 +44,15 @@ let with_dir b dir = { b with dir }
 let nop = fun _ -> Ok ()
 
 let cmd c os files =
-  Topkg_os.Cmd.run @@ Topkg_cmd.(build_cmd c os %% of_list files)
+  Topkg_os.Cmd.run @@
+    Topkg_cmd.(build_cmd ~use_toolchain:false c os %% v "-just-plugin") >>= fun () ->
+  Topkg_os.Cmd.run @@
+    Topkg_cmd.(build_cmd ~use_toolchain:true c os %% of_list files)
 
 let clean os ~build_dir =
   Topkg_os.Cmd.run @@ clean_cmd os ~build_dir
+
+let build_cmd = build_cmd ~use_toolchain:false
 
 let v
     ?(prepare_on_pin = true) ?(dir = "_build") ?(pre = nop) ?(cmd = cmd)
