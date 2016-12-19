@@ -560,7 +560,7 @@ module OCaml = struct
     get_bool_stdlib_file_exists_discovery "native" c ~file ~on_error:false
 
   let native_dynlink c =
-    let file _ = "dynlink.cmxa" in
+    let file _ = "nonexistent_dynlink.cmxa" in
     get_bool_stdlib_file_exists_discovery "natdynlink" c ~file ~on_error:false
 
   let word_size c =
